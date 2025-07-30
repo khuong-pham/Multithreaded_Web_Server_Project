@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multithreaded Web Server - C++17</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --border-color: #ecf0f1;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--light-bg);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 2rem 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .project-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--success-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        /* Navigation */
+        .navigation {
+            background: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+
+        .nav-list {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        /* Main Content */
+        .main {
+            padding: 3rem 0;
+        }
+
+        .section {
+            margin-bottom: 4rem;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        /* Overview Grid */
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .overview-content {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .tech-stack {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .tech-badge {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .server-info {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .feature-card.completed {
+            border-left-color: var(--success-color);
+        }
+
+        .feature-card.in-progress {
+            border-left-color: var(--warning-color);
+        }
+
+        .feature-card.planned {
+            border-left-color: var(--text-secondary);
+        }
+
+        .feature-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.completed {
+            background: #d4edda;
+            color: var(--success-color);
+        }
+
+        .status-badge.in-progress {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.planned {
+            background: #f8f9fa;
+            color: var(--text-secondary);
+        }
+
+        /* Explore Section */
+        .explore-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .explore-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .explore-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: var(--accent-color);
+        }
+
+        .explore-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .explore-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .explore-card p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .explore-highlights {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .highlight-item {
+            background: var(--light-bg);
+            color: var(--text-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+        }
+
+        .explore-link {
+            display: inline-block;
+            background: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 2rem;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .explore-link:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        /* Architecture Details */
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .architecture-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .architecture-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .architecture-list {
+            list-style: none;
+        }
+
+        .architecture-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .architecture-list li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .architecture-list li:last-child {
+            border-bottom: none;
+        }
+
+        .architecture-list strong {
+            color: var(--text-primary);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--primary-color);
+            color: white;
+            padding: 2rem 0 1rem;
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1rem;
+            color: white;
+        }
+
+        .footer-section p {
+            color: #bdc3c7;
+            line-height: 1.6;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px solid #34495e;
+            color: #95a5a6;
+            font-size: 0.875rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .overview-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-list {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .features-grid,
+            .architecture-grid,
+            .explore-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .explore-highlights {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">WS</div>
+                    <div>
+                        <div class="project-title">Multithreaded Web Server</div>
+                        <div class="project-subtitle">C++17 Implementation</div>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    Server Online
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <nav class="navigation">
+        <div class="container">
+            <ul class="nav-list">
+                <li><a href="#overview" class="nav-link active">Overview</a></li>
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#explore" class="nav-link">Explore</a></li>
+                <li><a href="#architecture" class="nav-link">Architecture</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            <section id="overview" class="section">
+                <div class="overview-grid">
+                    <div class="overview-content">
+                        <h1 class="section-title">Project Overview</h1>
+                        <p>A high-performance HTTP server built from scratch using modern C++17 features. This project demonstrates systems programming concepts including network programming, concurrent processing, and protocol implementation.</p>
+                        
+                        <p>The server handles HTTP/1.1 requests, serves static files with proper MIME type detection, and implements robust error handling. Currently supporting single-threaded operations with multithreading implementation in progress.</p>
+                        
+                        <div class="tech-stack">
+                            <span class="tech-badge">C++17</span>
+                            <span class="tech-badge">POSIX Sockets</span>
+                            <span class="tech-badge">HTTP/1.1</span>
+                            <span class="tech-badge">CMake</span>
+                        </div>
+                    </div>
+                    
+                    <div class="server-info">
+                        <h3>Server Information</h3>
+                        <div class="info-item">
+                            <span class="info-label">Protocol</span>
+                            <span class="info-value">HTTP/1.1</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Port</span>
+                            <span class="info-value">8081</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Document Root</span>
+                            <span class="info-value">./public</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Build Type</span>
+                            <span class="info-value">Release</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">C++ Standard</span>
+                            <span class="info-value">C++17</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="features" class="section">
+                <h2 class="section-title">Implementation Status</h2>
+                <div class="features-grid">
+                    <div class="feature-card completed">
+                        <div class="feature-header">
+                            <div>
+                                <h3 class="feature-title">TCP Socket Programming</h3>
+                                <div class="status-badge completed">Complete</div>
+                            </div>
+                        </div>
+                        <p class="feature-description">Low-level network communication using POSIX sockets with proper error handling and connection management.</p>
+                    </div>
+                    
+                    <div class="feature-card completed">
+                        <div class="feature-header">
+                            <div>
+                                <h3 class="feature-title">HTTP Request Parser</h3>
+                                <div class="status-badge completed">Complete</div>
+                            </div>
+                        </div>
+                        <p class="feature-description">Full HTTP/1.1 protocol parsing with header validation, method extraction, and URL parsing.</p>
+                    </div>
+                    
+                    <div class="feature-card completed">
+                        <div class="feature-header">
+                            <div>
+                                <h3 class="feature-title">Static File Serving</h3>
+                                <div class="status-badge completed">Complete</div>
+                            </div>
+                        </div>
+                        <p class="feature-description">Efficient file serving with MIME type detection, proper HTTP headers, and security measures.</p>
+                    </div>
+                    
+                    <div class="feature-card completed">
+                        <div class="feature-header">
+                            <div>
+                                <h3 class="feature-title">Thread Pool Implementation</h3>
+                                <div class="status-badge completed">COMPLETE</div>
+                            </div>
+                        </div>
+                        <p class="feature-description">Concurrent requests processing using worker threads with proper synchronization mechanisms.</p>
+                    </div>
+                    
+                    <div class="feature-card in-progress">
+                        <div class="feature-header">
+                            <div>
+                                <h3 class="feature-title">Performance Optimization</h3>
+                                <div class="status-badge in-progress">Planned</div>
+                            </div>
+                        </div>
+                        <p class="feature-description">Advanced features including caching, compression, and persistent connections.</p>
+                    </div>
+                    
+                    <div class="feature-card planned">
+                        <div class="feature-header">
+                            <div>
+                                <h3 class="feature-title">Monitoring & Metrics</h3>
+                                <div class="status-badge planned">Planned</div>
+                            </div>
+                        </div>
+                        <p class="feature-description">Request logging, performance metrics, and server health monitoring capabilities.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="explore" class="section">
+                <h2 class="section-title">Explore Technical Details</h2>
+                <div class="explore-grid">
+                    <div class="explore-card">
+                        <div class="explore-icon">🔧</div>
+                        <h3>Technical Deep Dive</h3>
+                        <p>Discover the problems solved by thread pool architecture, keep-alive connection management, and LRU file caching system. Learn how these design decisions create a high-performance server.</p>
+                        <div class="explore-highlights">
+                            <span class="highlight-item">Thread Pool Design</span>
+                            <span class="highlight-item">Keep-Alive Management</span>
+                            <span class="highlight-item">LRU Cache System</span>
+                        </div>
+                        <a href="/about" class="explore-link">Learn More →</a>
+                    </div>
+                    
+                    <div class="explore-card">
+                        <div class="explore-icon">📊</div>
+                        <h3>Server Metrics & Status</h3>
+                        <p>Real-time server performance monitoring with detailed statistics on active connections, cache efficiency, thread pool utilization.</p>
+                        <div class="explore-highlights">
+                            <span class="highlight-item">Benchmark Summary</span>
+                            <span class="highlight-item">Performance Data</span>
+                            <span class="highlight-item">Performance Evaluation</span>
+                        </div>
+                        <a href="/status" class="explore-link">View Status →</a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="architecture" class="section">
+                <h2 class="section-title">Technical Architecture</h2>
+                <div class="architecture-grid">
+                    <div class="architecture-card">
+                        <h3 class="architecture-title">Core Architecture</h3>
+                        <ul class="architecture-list">
+                            <li><strong>Modular Design:</strong> Separation of concerns with dedicated modules</li>
+                            <li><strong>RAII Pattern:</strong> Automatic resource management</li>
+                            <li><strong>Exception Safety:</strong> Comprehensive error handling</li>
+                            <li><strong>Security:</strong> Path traversal protection</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="architecture-card">
+                        <h3 class="architecture-title">Core Components</h3>
+                        <ul class="architecture-list">
+                            <li><strong>Server Class:</strong> Connection Handler and Worker Manager</li>
+                            <li><strong>HTTP Parser:</strong> Request parsing and validation</li>
+                            <li><strong>File Handler:</strong> Static file serving with MIME detection</li>
+                            <li><strong>Request Router:</strong> URL-based request routing</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="architecture-card">
+                        <h3 class="architecture-title">Performance Features</h3>
+                        <ul class="architecture-list">
+                            <li><strong>Memory Efficient:</strong> Minimal memory usage</li>
+                            <li><strong>Fast Response:</strong> Optimized static file serving</li>
+                            <li><strong>LRU Caching:</strong> In-memory cache with LRU eviction</li>
+                            <li><strong>Thread Pool:</strong> Scalable multithreaded processing</li>
+
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Multithreaded Web Server</h4>
+                    <p>Educational C++ project demonstrating systems programming concepts including network programming, HTTP protocol implementation, and concurrent processing.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Technologies Used</h4>
+                    <p>Modern C++17 features, POSIX Sockets API, HTTP/1.1 Protocol, CMake build system, and cross-platform compatibility.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Development Status</h4>
+                    <p>Static file serving completed, multithreading implementation in progress, performance optimization planned.</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 C++ Web Server Project - Systems Programming Demonstration</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Professional JavaScript for testing functionality
+        console.log('Multithreaded Web Server - Professional Interface Loaded');
+
+        function testEndpoint(endpoint) {
+            const resultsDiv = document.getElementById('test-results');
+            if (!resultsDiv) return;
+            
+            const startTime = Date.now();
+            resultsDiv.textContent = `Testing endpoint: ${endpoint}\nSending request...`;
+            
+            fetch(endpoint)
+                .then(response => {
+                    const responseTime = Date.now() - startTime;
+                    let result = `GET ${endpoint}\n`;
+                    result += `Status: ${response.status} ${response.statusText}\n`;
+                    result += `Response Time: ${responseTime}ms\n`;
+                    result += `Content-Type: ${response.headers.get('content-type') || 'Not specified'}\n`;
+                    result += `Content-Length: ${response.headers.get('content-length') || 'Not specified'}\n`;
+                    
+                    resultsDiv.textContent = result;
+                })
+                .catch(error => {
+                    const responseTime = Date.now() - startTime;
+                    resultsDiv.textContent = `Error testing ${endpoint}\nError: ${error.message}\nFailed after: ${responseTime}ms`;
+                });
+        }
+
+        // Simple navigation highlighting
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href.startsWith('#')) {
+                        e.preventDefault();
+                        
+                        // Update active nav link
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        // Smooth scroll to section
+                        const target = document.querySelector(href);
+                        if (target) {
+                            target.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
